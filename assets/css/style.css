@@ -1,7 +1,22 @@
-#col {
-  
-}
+ .row {
+     display: -ms-flexbox;
+     display: flex;
+     -ms-flex-wrap: wrap;
+     flex-wrap: wrap;
+     margin-right: -15px;
+     margin-left: -15px;
+     flex-direction: column;
+     align-content: center;
+ }
 
-h1 {
-    
-}
+ #search-history {
+     display: flex;
+     align-content: stretch;
+     flex-direction: row;
+ }
+
+ .search-item {
+    margin: 10px;
+    border: 1px solid blue;
+    padding: 5px;
+ }
