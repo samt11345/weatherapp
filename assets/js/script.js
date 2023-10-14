@@ -1,93 +1,104 @@
 const apiKey = '13ef001e053d1c1a140492e9f0ab4962';
+
+
+// Fetches weather data from OpenWeatherMap
 function getWeather(location) {
   const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${apiKey}`;
 
-  // api.openweathermap.org/data/2.5/forecast?q={city name}&appid={API key}
-
+  // Display loading message while fetching data
   document.getElementById('weather-container').innerHTML = '<h2>Loading...</h2>';
-
 
   fetch(apiUrl)
     .then(response => response.json())
     .then(data => {
-console.log(data)
       displayWeatherData(data);
       setToSearchHistory(data);
     })
     .catch(error => {
-
-      console.log(error);
+      console.error('Error fetching weather data:', error);
       document.getElementById('weather-container').innerHTML = '<h2>Error fetching weather data</h2>';
     });
 }
-document.getElementById('search-form').addEventListener('submit', function (event) {
-  event.preventDefault()
-  const location = document.getElementById('search-input').value;
 
-  getWeather(location)
+// Handle form submission to get weather
+document.getElementById('search-form').addEventListener('submit', function (event) {
+  event.preventDefault();
+  const location = document.getElementById('search-input').value;
+  getWeather(location);
 });
 
-
+// Display weather information
 function displayWeatherData(data) {
   const weatherContainer = document.getElementById('weather-container');
-  console.log(data.list[0])
-  for (let i = 0; i < 5; i++){
-  const temperatureCelsius = Math.round(data.list[i].main.temp - 273.15); // Convert temperature from Kelvin to Celsius
-  const temperatureFahrenheit = Math.round((temperatureCelsius * 9 / 5) + 32); // Convert temperature from Celsius to Fahrenheit
-  
-  const description = data.list[i].weather[0].description;
-  const weatherIcon = data.list[i].weather[0].icon;
-  const weatherHTML = `
-      <h2>Current Weather</h2>
-      <img src="http://openweathermap.org/img/w/${weatherIcon}.png" alt="Weather Icon">
-      <p>Temperature: ${temperatureFahrenheit}°F</p>
-      <p>Description: ${description}</p>
+  const city = data.city.name;
+
+  for (let i = 0; i < 5; i++) {
+    const temperatureCelsius = Math.round(data.list[i].main.temp - 273.15);
+    const temperatureFahrenheit = Math.round((temperatureCelsius * 9 / 5) + 32);
+    const humidity = data.list[i].main.humidity;
+    const windSpeed = data.list[i].wind.speed;
+    const date = new Date(data.list[i].dt * 1000).toLocaleDateString(); // Convert from UNIX timestamp to formatted date
+
+    const weatherHTML = `
+      <div class="card col-md-3 mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Weather Details</h5>
+          <p class="card-text">City: ${city}</p>
+          <p class="card-text">Date: ${date}</p>
+          <p class="card-text">Temperature: ${temperatureFahrenheit}°F</p>
+          <p class="card-text">Humidity: ${humidity}%</p>
+          <p class="card-text">Wind Speed: ${windSpeed} MPH</p>
+        </div>
+      </div>
     `;
-    var element = document.createElement("div")
-element.innerHTML=weatherHTML
-weatherContainer.append(element)
+
+    weatherContainer.innerHTML += weatherHTML;
+  }
 }
-}
+
+// Handle adding to search history
 function setToSearchHistory(data) {
-  console.log(data.city)
-  var searchHistoryContainer = document.getElementById('search-history')
-  var arrayInfo = JSON.parse(localStorage.getItem("mysearches")) || []
-  if (!arrayInfo.includes(data.city.name)) {
-    console.log(data.city.name)
-    var cityNameHTML =
-      `<h4 class="search-item">${data.city.name}</h4>`;
-    var element = document.createElement("div")
-    element.innerHTML = cityNameHTML
-    searchHistoryContainer.append(element)
-    arrayInfo.push(data.city.name)
-    localStorage.setItem("mysearches", JSON.stringify(arrayInfo))
-    hotSauce()
+  const searchHistoryContainer = document.getElementById('search-history');
+  const cityName = data.city.name;
+
+  if (!localStorage.getItem('mysearches')) {
+    localStorage.setItem('mysearches', JSON.stringify([cityName]));
+  } else {
+    const arrayInfo = JSON.parse(localStorage.getItem('mysearches'));
+    if (!arrayInfo.includes(cityName)) {
+      arrayInfo.push(cityName);
+      localStorage.setItem('mysearches', JSON.stringify(arrayInfo));
+    }
   }
+
+  // Display in search history
+  const cityNameHTML = `<h4 class="search-item">${cityName}</h4>`;
+  const element = document.createElement('div');
+  element.innerHTML = cityNameHTML;
+  searchHistoryContainer.appendChild(element);
+
+  hotSauce();
 }
-$(document).ready(function () {
-  var searchData = JSON.parse(localStorage.getItem("mysearches")) || {}
-  console.log(searchData)
-  var searchHistoryContainer = document.getElementById('search-history')
-  for (let i = 0; i < searchData.length; i++) {
-    var cityNameHTML =
-      `<h4 class="search-item">${searchData[i]}</h4>`;
-    var element = document.createElement("div")
-    element.innerHTML = cityNameHTML
-    searchHistoryContainer.append(element)
-    hotSauce()
-  }
 
-
-})
-
+// Click event for search history
 function hotSauce() {
-  console.log("hotSauce")
+  console.log('hotSauce');
   $(".search-item").click(function (event) {
-    console.log("search-item")
-    console.log(event.target.tagName)
-    const location = event.target.textContent
-    getWeather(location)
-  })
-
+    const location = event.target.textContent;
+    getWeather(location);
+  });
 }
 
+// Load search history on page load
+$(document).ready(function () {
+  const searchData = JSON.parse(localStorage.getItem('mysearches')) || {};
+  const searchHistoryContainer = document.getElementById('search-history');
+
+  for (let i = 0; i < searchData.length; i++) {
+    const cityNameHTML = `<h4 class="search-item">${searchData[i]}</h4>`;
+    const element = document.createElement('div');
+    element.innerHTML = cityNameHTML;
+    searchHistoryContainer.appendChild(element);
+    hotSauce();
+  }
+});
